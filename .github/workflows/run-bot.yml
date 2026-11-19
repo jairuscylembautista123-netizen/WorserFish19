@@ -1,4 +1,4 @@
-name: Run WorserFish19
+name: Run Worserfish1
 
 on:
   workflow_dispatch:
