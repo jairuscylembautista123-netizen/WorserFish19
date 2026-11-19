@@ -19,7 +19,7 @@ jobs:
         run: |
           gh repo clone lichess-bot-devs/lichess-bot bot -- --depth 1
           mkdir -p bot/engines/stockfish
-          gh release download --repo official-stockfish/Stockfish --pattern "*ubuntu-x86-64-avx2.tar*" -O sf.tar
+          gh release download --repo official-stockfish/Stockfish --pattern "*linux-x86-64*" -O sf.tar
           tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
           find bot/engines/stockfish -type f -name "stockfish*" -exec mv {} bot/engines/stockfish/stockfish-linux-x86-64-universal \;
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
