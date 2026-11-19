@@ -45,13 +45,15 @@ jobs:
           pip install -r requirements.txt
           cp config.yml.default config.yml
           python -c '
-          import yaml
+          import os, yaml
           with open("config.yml", "r") as f:
               cfg = yaml.safe_load(f)
-          cfg["token"] = "${{ secrets.LICHESS_TOKEN }}"
+          cfg["token"] = os.environ["LICHESS_TOKEN"]
           cfg["engine"]["protocol"] = "homemade"
           cfg["engine"]["name"] = "WorserFish19"
           cfg["challenge"]["modes"] = ["casual"]
+          cfg["challenge"]["concurrency"] = 4
+          cfg["challenge"]["games_reserved_for_humans"] = 1
           with open("config.yml", "w") as f:
               yaml.dump(cfg, f)
           '
