@@ -11,7 +11,7 @@ class WorserFish19(MinimalEngine):
     def search(self, board, time_limit, ponder, draw_offered, root_moves):
         legal_moves = list(board.legal_moves)
         if len(legal_moves) == 1:
-            return PlayResult(legal_moves, None)
+            return PlayResult(legal_moves[0], None)
 
         info_list = self.engine.analyse(
             board,
@@ -22,14 +22,16 @@ class WorserFish19(MinimalEngine):
         worst_to_best = list(reversed(info_list))
 
         for entry in worst_to_best:
-            move = entry["pv"]
+            move = entry["pv"][0]
             board.push(move)
             is_mate = board.is_checkmate()
             board.pop()
             if not is_mate:
                 return PlayResult(move, None)
 
-        return PlayResult(worst_to_best["pv"], None)
+        return PlayResult(worst_to_best[0]["pv"][0], None)
 
     def quit(self):
         self.engine.quit()
+
+ExampleEngine = WorserFish19
