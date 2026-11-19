@@ -44,9 +44,17 @@ jobs:
           cd bot
           pip install -r requirements.txt
           cp config.yml.default config.yml
-          sed -i "s/token: .*/token: \"$LICHESS_TOKEN\"/g" config.yml
-          sed -i 's/protocol: .*/protocol: "homemade"/g' config.yml
-          sed -i 's/name: .*/name: "WorserFish19"/g' config.yml
+          python -c '
+          import yaml
+          with open("config.yml", "r") as f:
+              cfg = yaml.safe_load(f)
+          cfg["token"] = "${{ secrets.LICHESS_TOKEN }}"
+          cfg["engine"]["protocol"] = "homemade"
+          cfg["engine"]["name"] = "WorserFish19"
+          cfg["challenge"]["modes"] = ["casual"]
+          with open("config.yml", "w") as f:
+              yaml.dump(cfg, f)
+          '
 
       - name: Start WorserFish19
         run: |
