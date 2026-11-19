@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - name: Checkout your repo
-        uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -24,21 +21,25 @@ jobs:
 
       - name: Download lichess-bot & Stockfish
         run: |
-          wget -q https://github.com -O bot.zip
-          unzip -q bot.zip
-          mv lichess-bot-master bot
-          cp homemade.py bot/homemade.py
+          git clone --depth 1 https://github.com bot
           mkdir -p bot/engines/stockfish
-          SF_URL=$(curl -s https://github.com | grep "browser_download_url.*ubuntu-x86-64-avx2.tar" | cut -d '"' -f 4 | head -n 1)
-          wget -q "$SF_URL" -O sf.tar
+          SF_URL=$(curl -sL https://github.com | grep -o 'https://[^"]*ubuntu-x86-64-avx2\.tar[^"]*' | head -n 1)
+          echo "Downloading: $SF_URL"
+          curl -sL "$SF_URL" -o sf.tar
           tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
-          mv bot/engines/stockfish/stockfish* bot/engines/stockfish/stockfish-linux-x86-64-universal
+          find bot/engines/stockfish -type f -name "stockfish*" -exec mv {} bot/engines/stockfish/stockfish-linux-x86-64-universal \;
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
+
+      - name: Checkout your repo
+        uses: actions/checkout@v4
+        with:
+          path: my-repo
 
       - name: Install dependencies & configure
         env:
           LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
         run: |
+          cp my-repo/homemade.py bot/homemade.py
           cd bot
           pip install -r requirements.txt
           cp config.yml.default config.yml
