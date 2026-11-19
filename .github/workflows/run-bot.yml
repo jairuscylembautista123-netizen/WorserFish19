@@ -13,19 +13,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Upgrade account to BOT
-        env:
-          LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
-        run: |
-          curl -s -d '' https://lichess.org -H "Authorization: Bearer $LICHESS_TOKEN"
-
       - name: Download lichess-bot & Stockfish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone --depth 1 https://github.com bot
+          gh repo clone lichess-bot-devs/lichess-bot bot -- --depth 1
           mkdir -p bot/engines/stockfish
-          SF_URL=$(curl -sL https://github.com | grep -o 'https://[^"]*ubuntu-x86-64-avx2\.tar[^"]*' | head -n 1)
-          echo "Downloading: $SF_URL"
-          curl -sL "$SF_URL" -o sf.tar
+          gh release download --repo official-stockfish/Stockfish --pattern "*ubuntu-x86-64-avx2.tar*" -O sf.tar
           tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
           find bot/engines/stockfish -type f -name "stockfish*" -exec mv {} bot/engines/stockfish/stockfish-linux-x86-64-universal \;
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
