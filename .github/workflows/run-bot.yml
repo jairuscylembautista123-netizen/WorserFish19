@@ -24,7 +24,9 @@ jobs:
 
       - name: Download lichess-bot & Stockfish
         run: |
-          git clone https://github.com bot
+          wget -q https://github.com -O bot.zip
+          unzip -q bot.zip
+          mv lichess-bot-master bot
           cp homemade.py bot/homemade.py
           mkdir -p bot/engines/stockfish
           SF_URL=$(curl -s https://github.com | grep "browser_download_url.*ubuntu-x86-64-avx2.tar" | cut -d '"' -f 4 | head -n 1)
