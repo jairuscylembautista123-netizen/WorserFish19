@@ -13,6 +13,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Upgrade account to BOT
+        env:
+          LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
+        run: |
+          API_HOST="https://lichess.org"
+          curl -s -d '' "$API_HOST/api/bot/account/upgrade" -H "Authorization: Bearer $LICHESS_TOKEN"
+
       - name: Download lichess-bot & Stockfish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,9 +44,9 @@ jobs:
           cd bot
           pip install -r requirements.txt
           cp config.yml.default config.yml
-          sed -i "s/xxxxxx/$LICHESS_TOKEN/g" config.yml
-          sed -i 's/protocol: "uci"/protocol: "homemade"/g' config.yml
-          sed -i 's/name: "engine_name"/name: "WorserFish19"/g' config.yml
+          sed -i "s/token: .*/token: \"$LICHESS_TOKEN\"/g" config.yml
+          sed -i 's/protocol: .*/protocol: "homemade"/g' config.yml
+          sed -i 's/name: .*/name: "WorserFish19"/g' config.yml
 
       - name: Start WorserFish19
         run: |
