@@ -4,8 +4,8 @@ from chess.engine import PlayResult, Limit
 from lib.engine_wrapper import MinimalEngine
 
 class WorserFish19(MinimalEngine):
-    def __init__(self, commands, options, stderr, draw_or_resign, **kwargs):
-        super().__init__(commands, options, stderr, draw_or_resign, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.engine = chess.engine.SimpleEngine.popen_uci("engines/stockfish/stockfish-linux-x86-64-universal")
 
     def search(self, board, time_limit, ponder, draw_offered, root_moves):
