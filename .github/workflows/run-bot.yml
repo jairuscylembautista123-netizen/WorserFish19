@@ -1,4 +1,4 @@
-name: Run Worserfish1
+name: Run WorserFish19
 
 on:
   workflow_dispatch:
@@ -22,13 +22,15 @@ jobs:
         run: |
           curl -s -d '' https://lichess.org -H "Authorization: Bearer $LICHESS_TOKEN"
 
-      - name: Download lichess-bot & Stockfish 19
+      - name: Download lichess-bot & Stockfish
         run: |
           git clone https://github.com bot
           cp homemade.py bot/homemade.py
-          mkdir -p bot/engines
-          wget -q https://github.com
-          tar -xzf stockfish-linux-x86-64-universal.tar.gz -C bot/engines/
+          mkdir -p bot/engines/stockfish
+          SF_URL=$(curl -s https://github.com | grep "browser_download_url.*ubuntu-x86-64-avx2.tar" | cut -d '"' -f 4 | head -n 1)
+          wget -q "$SF_URL" -O sf.tar
+          tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
+          mv bot/engines/stockfish/stockfish* bot/engines/stockfish/stockfish-linux-x86-64-universal
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
 
       - name: Install dependencies & configure
