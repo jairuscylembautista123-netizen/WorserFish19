@@ -2,11 +2,13 @@ name: Run WorserFish19
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *' # Backup trigger every 6 hours if a restart fails
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 345 # Exits safely before GitHub's 360-minute hard cutoff
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -59,6 +61,15 @@ jobs:
           '
 
       - name: Start WorserFish19
+        continue-on-error: true
         run: |
           cd bot
-          python lichess-bot.py
+          # Runs for 330 minutes (19800s), then sends SIGINT so active games finish cleanly
+          timeout -s INT 19800 python lichess-bot.py
+
+      - name: Trigger next workflow run
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh workflow run "Run WorserFish19" --repo ${{ github.repository }}
