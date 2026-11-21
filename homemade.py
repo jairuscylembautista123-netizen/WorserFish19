@@ -35,7 +35,10 @@ class WorserFish19(MinimalEngine):
             engine, uci_variant = self._get_engine_and_variant(board)
 
             if uci_variant and uci_variant != self.last_fairy_variant:
-                engine.configure({"UCI_Variant": uci_variant})
+                try:
+                    engine.configure({"UCI_Variant": uci_variant})
+                except chess.engine.EngineError:
+                    pass
                 self.last_fairy_variant = uci_variant
 
             num_pvs = min(len(legal_moves), 30)
