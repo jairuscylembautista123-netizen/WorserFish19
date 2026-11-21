@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '0 */6 * * *'
 
+concurrency:
+  group: worserfish19-bot
+  cancel-in-progress: true
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
@@ -15,28 +19,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Upgrade account to BOT
-        env:
-          LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
-        run: |
-          API_HOST="https://lichess.org"
-          curl -s -d '' "$API_HOST/api/bot/account/upgrade" -H "Authorization: Bearer $LICHESS_TOKEN"
-
-      - name: Download lichess-bot, Stockfish 19 & Fairy-Stockfish
+      - name: Download lichess-bot, Stockfish & Fairy-Stockfish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone lichess-bot-devs/lichess-bot bot -- --depth 1
           mkdir -p bot/engines/stockfish
 
-          # 1. Download Stockfish 19 (Standard, Chess960 & From Position)
           gh release download --repo official-stockfish/Stockfish --pattern "*linux-x86-64*" -O sf.tar
           tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
           find bot/engines/stockfish -type f -name "stockfish*" -exec mv {} bot/engines/stockfish/stockfish-linux-x86-64-universal \;
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
           rm -f sf.tar
 
-          # 2. Download Fairy-Stockfish (All Variants)
           gh release download --repo fairy-stockfish/Fairy-Stockfish --pattern "fairy-stockfish-largeboard_x86-64" -O bot/engines/fairy-stockfish
           chmod +x bot/engines/fairy-stockfish
 
@@ -79,11 +74,12 @@ jobs:
         continue-on-error: true
         run: |
           cd bot
-          timeout -s INT 19800 python lichess-bot.py
+          timeout -s INT 19500 python lichess-bot.py
 
       - name: Trigger next workflow run
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh workflow run "Run WorserFish19" --repo ${{ github.repository }}
+          sleep 15
+          gh workflow run "${{ github.workflow }}" --repo ${{ github.repository }}
