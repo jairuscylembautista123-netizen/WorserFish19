@@ -53,10 +53,12 @@ jobs:
           with open("config.yml", "r") as f:
               cfg = yaml.safe_load(f)
           cfg["token"] = os.environ["LICHESS_TOKEN"]
+          cfg["rate_limiting_delay"] = 30000
           cfg["engine"]["protocol"] = "homemade"
           cfg["engine"]["name"] = "WorserFish19"
           cfg["challenge"]["modes"] = ["casual"]
           cfg["challenge"]["concurrency"] = 4
+          cfg["challenge"]["preference"] = "human"
           cfg["challenge"]["games_reserved_for_humans"] = 1
           cfg["challenge"]["variants"] = [
               "standard", "chess960", "fromPosition", "antichess", "atomic",
@@ -81,5 +83,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          sleep 15
+          sleep 20
           gh workflow run "${{ github.workflow }}" --repo ${{ github.repository }}
