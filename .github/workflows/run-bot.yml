@@ -22,16 +22,23 @@ jobs:
           API_HOST="https://lichess.org"
           curl -s -d '' "$API_HOST/api/bot/account/upgrade" -H "Authorization: Bearer $LICHESS_TOKEN"
 
-      - name: Download lichess-bot & Stockfish
+      - name: Download lichess-bot, Stockfish 19 & Fairy-Stockfish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone lichess-bot-devs/lichess-bot bot -- --depth 1
           mkdir -p bot/engines/stockfish
+
+          # 1. Download Stockfish 19 (Standard, Chess960 & From Position)
           gh release download --repo official-stockfish/Stockfish --pattern "*linux-x86-64*" -O sf.tar
           tar -xf sf.tar -C bot/engines/stockfish --strip-components=1
           find bot/engines/stockfish -type f -name "stockfish*" -exec mv {} bot/engines/stockfish/stockfish-linux-x86-64-universal \;
           chmod +x bot/engines/stockfish/stockfish-linux-x86-64-universal
+          rm -f sf.tar
+
+          # 2. Download Fairy-Stockfish (All Variants)
+          gh release download --repo fairy-stockfish/Fairy-Stockfish --pattern "fairy-stockfish-largeboard_x86-64" -O bot/engines/fairy-stockfish
+          chmod +x bot/engines/fairy-stockfish
 
       - name: Checkout your repo
         uses: actions/checkout@v4
@@ -56,6 +63,14 @@ jobs:
           cfg["challenge"]["modes"] = ["casual"]
           cfg["challenge"]["concurrency"] = 4
           cfg["challenge"]["games_reserved_for_humans"] = 1
+          cfg["challenge"]["variants"] = [
+              "standard", "chess960", "fromPosition", "antichess", "atomic",
+              "crazyhouse", "horde", "kingOfTheHill", "racingKings", "threeCheck"
+          ]
+          cfg["engine_overrides"] = {
+              v: {"name": "fairy-stockfish"}
+              for v in ["antichess", "atomic", "crazyhouse", "horde", "kingOfTheHill", "racingKings", "threeCheck"]
+          }
           with open("config.yml", "w") as f:
               yaml.dump(cfg, f)
           '
