@@ -1,3 +1,5 @@
+import random
+import traceback
 import chess
 import chess.engine
 import chess.variant
@@ -14,6 +16,7 @@ class WorserFish19(MinimalEngine):
         self.fairy = chess.engine.SimpleEngine.popen_uci(
             "engines/fairy-stockfish"
         )
+        self.last_fairy_variant = None
 
     def _get_engine_and_variant(self, board):
         uci_variant = getattr(board, "uci_variant", "chess")
@@ -28,45 +31,61 @@ class WorserFish19(MinimalEngine):
         if len(legal_moves) == 1:
             return PlayResult(next(iter(legal_moves)), None)
 
-        engine, uci_variant = self._get_engine_and_variant(board)
+        try:
+            engine, uci_variant = self._get_engine_and_variant(board)
 
-        if uci_variant:
-            engine.configure({"UCI_Variant": uci_variant})
+            if uci_variant and uci_variant != self.last_fairy_variant:
+                engine.configure({"UCI_Variant": uci_variant})
+                self.last_fairy_variant = uci_variant
 
-        num_pvs = min(len(legal_moves), 50)
+            num_pvs = min(len(legal_moves), 30)
 
-        info_list = engine.analyse(
-            board,
-            Limit(time=0.15),
-            multipv=num_pvs
-        )
+            info_list = engine.analyse(
+                board,
+                Limit(time=0.25),
+                multipv=num_pvs
+            )
 
-        if isinstance(info_list, dict):
-            info_list = [info_list]
+            if isinstance(info_list, dict):
+                info_list = [info_list]
 
-        worst_to_best = list(reversed(info_list))
+            worst_to_best = list(reversed(info_list))
 
-        for entry in worst_to_best:
-            pv = entry.get("pv")
-            if not pv:
-                continue
-            move = next(iter(pv))
-            board.push(move)
-            is_mate = board.is_checkmate()
-            board.pop()
-            if not is_mate:
-                return PlayResult(move, None)
+            for entry in worst_to_best:
+                pv = entry.get("pv")
+                if not pv:
+                    continue
+                move = next(iter(pv))
+                if move not in board.legal_moves:
+                    continue
+                board.push(move)
+                is_mate = board.is_checkmate()
+                board.pop()
+                if not is_mate:
+                    return PlayResult(move, None)
 
-        for entry in worst_to_best:
-            pv = entry.get("pv")
-            if pv:
-                return PlayResult(next(iter(pv)), None)
+            for entry in worst_to_best:
+                pv = entry.get("pv")
+                if pv:
+                    move = next(iter(pv))
+                    if move in board.legal_moves:
+                        return PlayResult(move, None)
 
-        return PlayResult(next(iter(legal_moves)), None)
+        except Exception:
+            print("ERROR IN WORSERFISH SEARCH:")
+            traceback.print_exc()
+
+        return PlayResult(random.choice(legal_moves), None)
 
     def quit(self):
-        self.stockfish.quit()
-        self.fairy.quit()
+        try:
+            self.stockfish.quit()
+        except Exception:
+            pass
+        try:
+            self.fairy.quit()
+        except Exception:
+            pass
 
 
 ExampleEngine = WorserFish19
