@@ -17,7 +17,7 @@ class WorserFish19(MinimalEngine):
 
     def _get_engine_and_variant(self, board):
         uci_variant = getattr(board, "uci_variant", "chess")
-        if uci_variant in ("chess", "chess960", "fromposition"):
+        if uci_variant in ("chess", "chess960"):
             return self.stockfish, None
         return self.fairy, uci_variant
 
@@ -26,41 +26,43 @@ class WorserFish19(MinimalEngine):
         if not legal_moves:
             return PlayResult(None, None)
         if len(legal_moves) == 1:
-            return PlayResult(legal_moves[0], None)
+            return PlayResult(next(iter(legal_moves)), None)
 
         engine, uci_variant = self._get_engine_and_variant(board)
 
         if uci_variant:
             engine.configure({"UCI_Variant": uci_variant})
 
+        num_pvs = min(len(legal_moves), 50)
+
         info_list = engine.analyse(
             board,
             Limit(time=0.15),
-            multipv=len(legal_moves)
+            multipv=num_pvs
         )
 
-        # Ensure we handle either a list or single dict response safely
         if isinstance(info_list, dict):
             info_list = [info_list]
 
         worst_to_best = list(reversed(info_list))
 
         for entry in worst_to_best:
-            if "pv" not in entry or not entry["pv"]:
+            pv = entry.get("pv")
+            if not pv:
                 continue
-            move = entry["pv"][0]
+            move = next(iter(pv))
             board.push(move)
             is_mate = board.is_checkmate()
             board.pop()
             if not is_mate:
                 return PlayResult(move, None)
 
-        # Fallback if every move delivers checkmate
         for entry in worst_to_best:
-            if "pv" in entry and entry["pv"]:
-                return PlayResult(entry["pv"][0], None)
+            pv = entry.get("pv")
+            if pv:
+                return PlayResult(next(iter(pv)), None)
 
-        return PlayResult(legal_moves[0], None)
+        return PlayResult(next(iter(legal_moves)), None)
 
     def quit(self):
         self.stockfish.quit()
