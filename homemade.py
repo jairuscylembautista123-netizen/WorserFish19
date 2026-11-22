@@ -13,9 +13,13 @@ class WorserFish19(MinimalEngine):
         self.stockfish = chess.engine.SimpleEngine.popen_uci(
             "engines/stockfish/stockfish-linux-x86-64-universal"
         )
+        self.stockfish.configure({"Threads": 4, "Hash": 512})
+
         self.fairy = chess.engine.SimpleEngine.popen_uci(
             "engines/fairy-stockfish"
         )
+        self.fairy.configure({"Threads": 4, "Hash": 512})
+
         self.last_fairy_variant = None
 
     def _get_engine_and_variant(self, board):
@@ -41,7 +45,7 @@ class WorserFish19(MinimalEngine):
                     pass
                 self.last_fairy_variant = uci_variant
 
-            num_pvs = min(len(legal_moves), 30)
+            num_pvs = min(len(legal_moves), 250)
 
             info_list = engine.analyse(
                 board,
